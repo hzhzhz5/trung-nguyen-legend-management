@@ -17,10 +17,15 @@ pip install -r requirements.txt
 #bước 4: tạo file .env
 
 SECRET_KEY=coffee_chain_secret_key_2026
+
 DB_HOST=127.0.0.1
+
 DB_PORT=3306
+
 DB_NAME=trung_nguyen_legend_db
+
 DB_USER=root
+
 DB_PASSWORD=
 
 #bước 5: chạy xampp tạo database
