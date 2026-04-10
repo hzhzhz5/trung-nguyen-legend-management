@@ -1,6 +1,7 @@
 # trung-nguyen-legend-management
 #bước 1:
-git clone https://github.com/ten-ban/trung-nguyen-legend-management.git
+git clone https://github.com/hzhzhz5/trung-nguyen-legend-management.git
+
 cd trung-nguyen-legend-management
 
 #bước 2: Tạo môi trường ảo bằng code trong cmd
