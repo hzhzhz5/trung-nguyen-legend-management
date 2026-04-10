@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Lịch sử giao dịch kho{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">Lịch sử giao dịch kho</h2>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if transactions %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Cửa hàng</th>
+                        <th>Nguyên liệu</th>
+                        <th>Loại giao dịch</th>
+                        <th>Số lượng</th>
+                        <th>Tham chiếu</th>
+                        <th>Người thực hiện</th>
+                        <th>Thời gian</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trx in transactions %}
+                    <tr>
+                        <td>{{ trx.transaction_id }}</td>
+                        <td>{{ trx.store.store_name }}</td>
+                        <td>{{ trx.ingredient.ingredient_name }}</td>
+                        <td>{{ trx.transaction_type }}</td>
+                        <td>{{ trx.quantity }} {{ trx.ingredient.unit }}</td>
+                        <td>{{ trx.reference_type or '' }} #{{ trx.reference_id or '' }}</td>
+                        <td>{{ trx.creator.full_name if trx.creator else 'Admin hoặc hệ thống' }}</td>
+                        <td>{{ trx.created_at.strftime('%Y-%m-%d %H:%M:%S') if trx.created_at else '' }}</td>
+                        <td>{{ trx.note or '' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="mb-0">Chưa có giao dịch kho nào.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

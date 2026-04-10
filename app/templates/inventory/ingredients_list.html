@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý nguyên liệu{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Quản lý nguyên liệu</h2>
+    <a href="{{ url_for('inventory.create_ingredient') }}" class="btn btn-primary">Thêm nguyên liệu</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if ingredients %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Mã NL</th>
+                        <th>Tên nguyên liệu</th>
+                        <th>Đơn vị</th>
+                        <th>Tồn tối thiểu</th>
+                        <th>Trạng thái</th>
+                        <th width="180">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ingredient in ingredients %}
+                    <tr>
+                        <td>{{ ingredient.ingredient_id }}</td>
+                        <td>{{ ingredient.ingredient_code }}</td>
+                        <td>{{ ingredient.ingredient_name }}</td>
+                        <td>{{ ingredient.unit }}</td>
+                        <td>{{ ingredient.min_stock_level }}</td>
+                        <td>
+                            {% if ingredient.status == "active" %}
+                                <span class="badge bg-success">Hoạt động</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Ngưng hoạt động</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('inventory.edit_ingredient', ingredient_id=ingredient.ingredient_id) }}" class="btn btn-warning btn-sm">Sửa</a>
+                            <form method="POST" action="{{ url_for('inventory.delete_ingredient', ingredient_id=ingredient.ingredient_id) }}" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa nguyên liệu này?');">
+                                <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="mb-0">Chưa có nguyên liệu nào.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

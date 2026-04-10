@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý nhà cung cấp{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Quản lý nhà cung cấp</h2>
+    <a href="{{ url_for('inventory.create_supplier') }}" class="btn btn-primary">Thêm nhà cung cấp</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if suppliers %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Mã NCC</th>
+                        <th>Tên nhà cung cấp</th>
+                        <th>Điện thoại</th>
+                        <th>Email</th>
+                        <th>Địa chỉ</th>
+                        <th>Trạng thái</th>
+                        <th width="180">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for supplier in suppliers %}
+                    <tr>
+                        <td>{{ supplier.supplier_id }}</td>
+                        <td>{{ supplier.supplier_code }}</td>
+                        <td>{{ supplier.supplier_name }}</td>
+                        <td>{{ supplier.phone or '' }}</td>
+                        <td>{{ supplier.email or '' }}</td>
+                        <td>{{ supplier.address or '' }}</td>
+                        <td>
+                            {% if supplier.status == "active" %}
+                                <span class="badge bg-success">Hoạt động</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Ngưng hoạt động</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('inventory.edit_supplier', supplier_id=supplier.supplier_id) }}" class="btn btn-warning btn-sm">Sửa</a>
+                            <form method="POST" action="{{ url_for('inventory.delete_supplier', supplier_id=supplier.supplier_id) }}" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa nhà cung cấp này?');">
+                                <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="mb-0">Chưa có nhà cung cấp nào.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

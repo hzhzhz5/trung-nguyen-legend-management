@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý nhân viên{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Quản lý nhân viên</h2>
+    <a href="{{ url_for('admin.create_employee') }}" class="btn btn-primary">
+        Thêm nhân viên
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if employees %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Mã NV</th>
+                            <th>Họ và tên</th>
+                            <th>Giới tính</th>
+                            <th>Ngày sinh</th>
+                            <th>Điện thoại</th>
+                            <th>Email</th>
+                            <th>Cửa hàng</th>
+                            <th>Trạng thái</th>
+                            <th width="180">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>{{ employee.employee_id }}</td>
+                            <td>{{ employee.employee_code }}</td>
+                            <td>{{ employee.full_name }}</td>
+                            <td>{{ employee.gender or '' }}</td>
+                            <td>{{ employee.date_of_birth.strftime('%Y-%m-%d') if employee.date_of_birth else '' }}</td>
+                            <td>{{ employee.phone or '' }}</td>
+                            <td>{{ employee.email or '' }}</td>
+                            <td>{{ employee.store.store_name if employee.store else '' }}</td>
+                            <td>
+                                {% if employee.status == 'active' %}
+                                    <span class="badge bg-success">Đang làm việc</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Ngưng làm việc</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin.edit_employee', employee_id=employee.employee_id) }}"
+                                   class="btn btn-warning btn-sm">
+                                    Sửa
+                                </a>
+
+                                <form action="{{ url_for('admin.delete_employee', employee_id=employee.employee_id) }}"
+                                      method="POST"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Bạn có chắc muốn xóa nhân viên này?');">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        Xóa
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="mb-0">Chưa có nhân viên nào.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

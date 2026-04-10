@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Tồn kho{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">Tồn kho theo cửa hàng</h2>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if inventory_records %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Cửa hàng</th>
+                        <th>Nguyên liệu</th>
+                        <th>Số lượng tồn</th>
+                        <th>Mức tối thiểu</th>
+                        <th>Cập nhật lần cuối</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in inventory_records %}
+                    <tr>
+                        <td>{{ record.inventory_id }}</td>
+                        <td>{{ record.store.store_name }}</td>
+                        <td>{{ record.ingredient.ingredient_name }}</td>
+                        <td>{{ record.quantity_on_hand }} {{ record.ingredient.unit }}</td>
+                        <td>{{ record.ingredient.min_stock_level }} {{ record.ingredient.unit }}</td>
+                        <td>{{ record.last_updated.strftime('%Y-%m-%d %H:%M:%S') if record.last_updated else '' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="mb-0">Chưa có dữ liệu tồn kho.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="mb-2">Dashboard</h2>
+
+    <p><strong>Tên đăng nhập:</strong> {{ current_user.username }}</p>
+
+    {% if current_user.role %}
+        <p><strong>Vai trò:</strong> {{ current_user.role.role_name }}</p>
+    {% endif %}
+
+    {% if current_user.employee %}
+        <p><strong>Nhân viên:</strong> {{ current_user.employee.full_name }}</p>
+        <p><strong>Cửa hàng:</strong> {{ current_user.employee.store.store_name }}</p>
+    {% else %}
+        <p><strong>Loại tài khoản:</strong> Admin tổng hệ thống hoặc tài khoản chưa gắn nhân viên</p>
+    {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h6 class="text-muted">Tổng số cửa hàng</h6>
+                <h3>{{ total_stores }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h6 class="text-muted">Tổng số nhân viên</h6>
+                <h3>{{ total_employees }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h6 class="text-muted">Tổng số sản phẩm</h6>
+                <h3>{{ total_products }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h6 class="text-muted">Số đơn hôm nay</h6>
+                <h3>{{ orders_today }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h6 class="text-muted">Doanh thu hôm nay</h6>
+                <h3>{{ "{:,.0f}".format(revenue_today or 0) }} đ</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h6 class="text-muted">Đơn đang chờ thanh toán</h6>
+                <h3>{{ pending_orders }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('admin.stores_list') }}" class="btn btn-primary">
+        Quản lý cửa hàng
+    </a>
+
+    <a href="{{ url_for('admin.employees_list') }}" class="btn btn-primary">
+        Quản lý nhân viên
+    </a>
+
+    <a href="{{ url_for('catalog.tables_list') }}" class="btn btn-success">
+        Quản lý bàn
+    </a>
+
+    <a href="{{ url_for('catalog.categories_list') }}" class="btn btn-success">
+        Quản lý danh mục
+    </a>
+
+    <a href="{{ url_for('catalog.products_list') }}" class="btn btn-success">
+        Quản lý sản phẩm
+    </a>
+
+    <a href="{{ url_for('sales.orders_list') }}" class="btn btn-warning">
+        Danh sách đơn hàng
+    </a>
+
+    <a href="{{ url_for('sales.create_order') }}" class="btn btn-warning">
+        Tạo đơn hàng
+    </a>
+
+    <a href="{{ url_for('inventory.ingredients_list') }}" class="btn btn-info">
+        Nguyên liệu
+    </a>
+
+    <a href="{{ url_for('inventory.suppliers_list') }}" class="btn btn-info">
+        Nhà cung cấp
+    </a>
+
+    <a href="{{ url_for('inventory.purchase_orders_list') }}" class="btn btn-info">
+        Phiếu nhập
+    </a>
+
+    <a href="{{ url_for('inventory.inventory_list') }}" class="btn btn-info">
+        Tồn kho
+    </a>
+
+    <a href="{{ url_for('inventory.transactions_list') }}" class="btn btn-info">
+        Giao dịch kho
+    </a>
+
+    {% if role_name in ["ADMIN", "MANAGER"] %}
+    <a href="{{ url_for('reports.revenue_report') }}" class="btn btn-dark">
+        Báo cáo doanh thu
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
