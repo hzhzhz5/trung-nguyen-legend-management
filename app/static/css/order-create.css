@@ -1,0 +1,75 @@
+.table-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 14px;
+}
+
+.table-card {
+    border-radius: 12px;
+    padding: 14px;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.table-card.empty {
+    background: #dff5e8;
+    cursor: pointer;
+}
+
+.table-card.empty:hover {
+    border-color: #5cbf87;
+    transform: translateY(-2px);
+}
+
+.table-card.occupied {
+    background: #f7e8a3;
+    cursor: not-allowed;
+    opacity: 0.95;
+}
+
+.table-card.selected {
+    background: #dbe9ff !important;
+    border-color: #4c84ff;
+    box-shadow: 0 0 0 2px rgba(76, 132, 255, 0.15);
+}
+
+.table-name {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.table-meta,
+.table-status {
+    font-size: 14px;
+    color: #333;
+}
+
+.table-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    font-size: 14px;
+}
+
+.legend-box {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.legend-empty {
+    background: #dff5e8;
+}
+
+.legend-occupied {
+    background: #f7e8a3;
+}
+
+.legend-selected {
+    background: #dbe9ff;
+}

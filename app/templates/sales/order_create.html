@@ -1,35 +1,129 @@
 {% extends "base.html" %}
 
-{% block title %}Tạo đơn hàng{% endblock %}
-
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-7">
-        <div class="card shadow-sm">
-            <div class="card-header">
-                <h3 class="mb-0">Tạo đơn hàng</h3>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    {{ form.hidden_tag() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/order-create.css') }}">
 
-                    <div class="mb-3">
-                        {{ form.table_id.label(class="form-label") }}
-                        {{ form.table_id(class="form-select") }}
-                    </div>
+<div class="container mt-4">
+    <h2 class="mb-4">Tạo đơn hàng</h2>
 
-                    <div class="mb-3">
-                        {{ form.note.label(class="form-label") }}
-                        {{ form.note(class="form-control") }}
-                    </div>
+    <form method="POST">
+        {{ form.hidden_tag() }}
 
-                    <div class="d-flex gap-2">
-                        {{ form.submit(class="btn btn-primary") }}
-                        <a href="{{ url_for('sales.orders_list') }}" class="btn btn-secondary">Quay lại</a>
-                    </div>
-                </form>
-            </div>
+        <div class="mb-3">
+            {{ form.order_type.label(class="form-label") }}
+            {{ form.order_type(class="form-select", id="order_type") }}
+            {% for error in form.order_type.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
         </div>
-    </div>
+
+        <div class="mb-3" id="table_block">
+            <label class="form-label">Chọn bàn</label>
+
+            <div class="d-none">
+                {{ form.table_id(class="form-select", id="table_id") }}
+            </div>
+
+            <div class="table-grid">
+                {% for table in tables %}
+                    {% set is_occupied = table.status != 'empty' %}
+                    <div
+                        class="table-card {% if is_occupied %}occupied{% else %}empty{% endif %}"
+                        data-table-id="{{ table.table_id }}"
+                        data-disabled="{{ 'true' if is_occupied else 'false' }}"
+                    >
+                        <div class="table-name">{{ table.table_code }}</div>
+                        <div class="table-meta">Sức chứa: {{ table.capacity }} người</div>
+                        <div class="table-status">
+                            {% if is_occupied %}
+                                Đang sử dụng
+                            {% else %}
+                                Trống
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="table-legend mt-3">
+                <span><span class="legend-box legend-empty"></span> Bàn trống</span>
+                <span><span class="legend-box legend-occupied"></span> Đang có khách</span>
+                <span><span class="legend-box legend-selected"></span> Bàn đang chọn</span>
+            </div>
+
+            {% for error in form.table_id.errors %}
+                <div class="text-danger mt-2">{{ error }}</div>
+            {% endfor %}
+            <small class="text-muted d-block mt-2">Chỉ áp dụng cho khách ngồi tại quán</small>
+        </div>
+
+        <div class="mb-3" id="customer_name_block">
+            {{ form.customer_name.label(class="form-label") }}
+            {{ form.customer_name(class="form-control") }}
+            {% for error in form.customer_name.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-3" id="customer_phone_block">
+            {{ form.customer_phone.label(class="form-label") }}
+            {{ form.customer_phone(class="form-control") }}
+            {% for error in form.customer_phone.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-3" id="delivery_address_block">
+            {{ form.delivery_address.label(class="form-label") }}
+            {{ form.delivery_address(class="form-control") }}
+            {% for error in form.delivery_address.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-3">
+            {{ form.note.label(class="form-label") }}
+            {{ form.note(class="form-control") }}
+            {% for error in form.note.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <hr class="my-4">
+
+        <h5 class="mb-3">Món đầu tiên</h5>
+
+        <div class="mb-3">
+            {{ form.product_id.label(class="form-label") }}
+            {{ form.product_id(class="form-select") }}
+            {% for error in form.product_id.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-3">
+            {{ form.quantity.label(class="form-label") }}
+            {{ form.quantity(class="form-control") }}
+            {% for error in form.quantity.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-3">
+            {{ form.item_note.label(class="form-label") }}
+            {{ form.item_note(class="form-control") }}
+            {% for error in form.item_note.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+        <a href="{{ url_for('sales.orders_list') }}" class="btn btn-secondary">Quay lại</a>
+    </form>
 </div>
+
+<script>
+    window.ORDER_CREATE_INITIAL_TABLE_ID = "{{ form.table_id.data or 0 }}";
+</script>
+<script src="{{ url_for('static', filename='js/order-create.js') }}"></script>
 {% endblock %}

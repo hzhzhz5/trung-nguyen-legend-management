@@ -11,7 +11,38 @@
             </div>
             <div class="card-body">
                 <p><strong>Mã đơn:</strong> {{ order.order_code }}</p>
-                <p><strong>Bàn:</strong> {{ order.table.table_code }}</p>
+
+                <p>
+                    <strong>Loại đơn:</strong>
+                    {% if order.order_type == "dine_in" %}
+                        Tại quán
+                    {% elif order.order_type == "takeaway" %}
+                        Mang về
+                    {% elif order.order_type == "delivery" %}
+                        Ship nước
+                    {% else %}
+                        {{ order.order_type }}
+                    {% endif %}
+                </p>
+
+                {% if order.table %}
+                    <p><strong>Bàn:</strong> {{ order.table.table_code }}</p>
+                {% endif %}
+
+                {% if order.customer_name %}
+                    <p><strong>Khách hàng:</strong> {{ order.customer_name }}</p>
+                {% endif %}
+
+                {% if order.customer_phone %}
+                    <p><strong>SĐT:</strong> {{ order.customer_phone }}</p>
+                {% endif %}
+
+                {% if order.delivery_address %}
+                    <p><strong>Địa chỉ:</strong> {{ order.delivery_address }}</p>
+                {% endif %}
+
+                <p><strong>Tạm tính:</strong> {{ "{:,.0f}".format(order.subtotal or 0) }} đ</p>
+                <p><strong>Phí ship:</strong> {{ "{:,.0f}".format(order.shipping_fee or 0) }} đ</p>
                 <p><strong>Tổng tiền:</strong> {{ "{:,.0f}".format(order.total_amount or 0) }} đ</p>
 
                 <form method="POST">

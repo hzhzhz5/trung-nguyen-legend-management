@@ -1,110 +1,197 @@
 {% extends "base.html" %}
 
-{% block title %}Chi tiết đơn hàng{% endblock %}
-
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Chi tiết đơn hàng</h2>
-    <div class="d-flex gap-2">
-        {% if order.status == 'pending' %}
-        <a href="{{ url_for('sales.payment', order_id=order.order_id) }}" class="btn btn-success">
-            Thanh toán
-        </a>
-        {% endif %}
-        <a href="{{ url_for('sales.orders_list') }}" class="btn btn-secondary">Quay lại</a>
-    </div>
-</div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/order-pos.css') }}">
 
-<div class="card shadow-sm mb-3">
-    <div class="card-body">
-        <p><strong>Mã đơn:</strong> {{ order.order_code }}</p>
-        <p><strong>Cửa hàng:</strong> {{ order.store.store_name }}</p>
-        <p><strong>Bàn:</strong> {{ order.table.table_code }}</p>
-        <p><strong>Nhân viên:</strong> {{ order.employee.full_name }}</p>
-        <p><strong>Trạng thái:</strong> {{ order.status }}</p>
-        <p><strong>Tổng tiền:</strong> {{ "{:,.0f}".format(order.total_amount or 0) }} đ</p>
-        <p><strong>Ghi chú:</strong> {{ order.note or '' }}</p>
-    </div>
-</div>
+<div class="container-fluid order-pos-page">
+    <div class="pos-layout">
+        <div class="pos-left">
+            <div class="pos-toolbar">
+                <input
+                    type="text"
+                    id="product-search"
+                    class="form-control"
+                    placeholder="Tìm món, mã món, từ khóa..."
+                >
 
-{% if order.status == 'pending' %}
-<div class="card shadow-sm mb-3">
-    <div class="card-header">
-        <h4 class="mb-0">Thêm món</h4>
-    </div>
-    <div class="card-body">
-        <form method="POST" action="{{ url_for('sales.add_order_item', order_id=order.order_id) }}">
-            {{ form.hidden_tag() }}
+                <select id="product-category-select" class="form-select">
+                    <option value="">Tất cả danh mục</option>
+                    {% for category_name in category_names %}
+                        <option value="{{ category_name }}">{{ category_name }}</option>
+                    {% endfor %}
+                </select>
 
-            <div class="row">
-                <div class="col-md-5 mb-3">
-                    {{ form.product_id.label(class="form-label") }}
-                    {{ form.product_id(class="form-select") }}
+                <a href="{{ url_for('sales.orders_list') }}" class="btn btn-secondary">Quay lại</a>
+            </div>
+
+            <div class="category-tabs">
+                <button type="button" class="category-chip active" data-category="">Tất cả</button>
+                {% for category_name in category_names %}
+                    <button type="button" class="category-chip" data-category="{{ category_name }}">
+                        {{ category_name }}
+                    </button>
+                {% endfor %}
+            </div>
+
+            <div class="product-grid">
+                {% for product in products %}
+                    {% set category_name = product.category.category_name if product.category else '' %}
+                    <div
+                        class="product-card"
+                        data-name="{{ product.product_name }}"
+                        data-code="{{ product.product_code }}"
+                        data-category="{{ category_name }}"
+                    >
+                        <div class="product-image-wrap">
+                            <img
+                                src="{{ product.image_url if product.image_url else url_for('static', filename='img/no-image.png') }}"
+                                alt="{{ product.product_name }}"
+                                class="product-image"
+                                onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/no-image.png') }}';"
+                            >
+                        </div>
+
+                        <div class="product-body">
+                            <h3 class="product-name">{{ product.product_name }}</h3>
+
+                            <div class="product-meta">
+                                {% if category_name %}
+                                    {{ category_name }}
+                                {% else %}
+                                    Chưa phân loại
+                                {% endif %}
+                            </div>
+
+                            <div class="product-stock">Còn: {{ product.quantity_in_stock or 0 }}</div>
+
+                            <div class="product-footer">
+                                <div class="product-price">{{ "{:,.0f}".format(product.price or 0) }}đ</div>
+                                <button
+                                    type="button"
+                                    class="product-add-btn"
+                                    data-product-id="{{ product.product_id }}"
+                                    data-product-name="{{ product.product_name }}"
+                                    data-stock="{{ product.quantity_in_stock or 0 }}"
+                                    {% if (product.quantity_in_stock or 0) <= 0 %}disabled{% endif %}
+                                >
+                                    Thêm
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <form
+                id="quick-add-form"
+                method="POST"
+                action="{{ url_for('sales.add_order_item', order_id=order.order_id) }}"
+                class="hidden-add-form"
+            >
+                {{ form.hidden_tag() }}
+                {{ form.product_id() }}
+                {{ form.quantity() }}
+                {{ form.note(value='') }}
+            </form>
+        </div>
+
+        <div class="pos-right">
+            <div class="order-side-title">Đơn hàng</div>
+
+            <div class="order-info-box">
+                <p><strong>Mã đơn:</strong> {{ order.order_code }}</p>
+
+                {% if order.customer_name %}
+                    <p><strong>Khách hàng:</strong> {{ order.customer_name }}</p>
+                {% else %}
+                    <p><strong>Khách hàng:</strong> Khách lẻ</p>
+                {% endif %}
+
+                <p>
+                    <strong>Hình thức:</strong>
+                    {% if order.order_type == "dine_in" %}
+                        Tại quán
+                    {% elif order.order_type == "takeaway" %}
+                        Mang đi
+                    {% elif order.order_type == "delivery" %}
+                        Ship
+                    {% else %}
+                        {{ order.order_type }}
+                    {% endif %}
+                </p>
+
+                {% if order.table %}
+                    <p><strong>Bàn:</strong> {{ order.table.table_code }}</p>
+                {% endif %}
+
+                <p><strong>Trạng thái:</strong> {{ order.status }}</p>
+            </div>
+
+            <div class="order-note-area">
+                <label class="form-label fw-bold">Ghi chú đơn</label>
+                <textarea class="form-control" rows="3" readonly>{{ order.note or '' }}</textarea>
+            </div>
+
+            <div class="order-items-box">
+                <h5 class="mb-3">Danh sách món</h5>
+
+                {% if order.order_items %}
+                    {% for item in order.order_items %}
+                        <div class="order-item-row">
+                            <div>
+                                <div class="order-item-name">{{ item.product.product_name }}</div>
+                                <div class="text-muted small">{{ item.note or "-" }}</div>
+                            </div>
+                            <div>x{{ item.quantity }}</div>
+                            <div>{{ "{:,.0f}".format(item.unit_price or 0) }}đ</div>
+                            <div class="text-end">
+                                <div>{{ "{:,.0f}".format(item.line_total or 0) }}đ</div>
+                                {% if order.status == "pending" %}
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for('sales.delete_order_item', order_id=order.order_id, item_id=item.order_item_id) }}"
+                                        class="mt-2"
+                                    >
+                                        <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-muted">Chưa có món nào.</div>
+                {% endif %}
+            </div>
+
+            <div class="order-summary-box">
+                <div class="order-total-line">
+                    <span>Tạm tính</span>
+                    <span>{{ "{:,.0f}".format(order.subtotal or 0) }}đ</span>
                 </div>
-
-                <div class="col-md-2 mb-3">
-                    {{ form.quantity.label(class="form-label") }}
-                    {{ form.quantity(class="form-control") }}
+                <div class="order-total-line">
+                    <span>Phí ship</span>
+                    <span>{{ "{:,.0f}".format(order.shipping_fee or 0) }}đ</span>
                 </div>
-
-                <div class="col-md-5 mb-3">
-                    {{ form.note.label(class="form-label") }}
-                    {{ form.note(class="form-control") }}
+                <div class="order-total-final">
+                    <span>Tổng cộng</span>
+                    <span>{{ "{:,.0f}".format(order.total_amount or 0) }}đ</span>
                 </div>
             </div>
 
-            {{ form.submit(class="btn btn-primary") }}
-        </form>
-    </div>
-</div>
-{% endif %}
+            {% if order.status == "pending" %}
+                <a href="{{ url_for('sales.payment', order_id=order.order_id) }}" class="btn btn-success pos-action-btn">
+                    Thanh toán
+                </a>
+            {% endif %}
 
-<div class="card shadow-sm">
-    <div class="card-header">
-        <h4 class="mb-0">Các món trong đơn</h4>
-    </div>
-    <div class="card-body">
-        {% if order.order_items %}
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Sản phẩm</th>
-                        <th>Số lượng</th>
-                        <th>Đơn giá</th>
-                        <th>Thành tiền</th>
-                        <th>Ghi chú</th>
-                        {% if order.status == 'pending' %}
-                        <th width="100">Thao tác</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in order.order_items %}
-                    <tr>
-                        <td>{{ item.order_item_id }}</td>
-                        <td>{{ item.product.product_name }}</td>
-                        <td>{{ item.quantity }}</td>
-                        <td>{{ "{:,.0f}".format(item.unit_price) }} đ</td>
-                        <td>{{ "{:,.0f}".format(item.line_total) }} đ</td>
-                        <td>{{ item.note or '' }}</td>
-                        {% if order.status == 'pending' %}
-                        <td>
-                            <form method="POST" action="{{ url_for('sales.delete_order_item', order_id=order.order_id, item_id=item.order_item_id) }}"
-                                  onsubmit="return confirm('Bạn có chắc muốn xóa món này?');">
-                                <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
-                            </form>
-                        </td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            {% if order.status == "paid" and order.order_type == "dine_in" %}
+                <form method="POST" action="{{ url_for('sales.clear_table', order_id=order.order_id) }}">
+                    <button type="submit" class="btn btn-warning pos-action-btn">Dọn bàn</button>
+                </form>
+            {% endif %}
         </div>
-        {% else %}
-        <p class="mb-0">Đơn hàng chưa có món nào.</p>
-        {% endif %}
     </div>
 </div>
+
+<script src="{{ url_for('static', filename='js/order-pos.js') }}"></script>
 {% endblock %}
