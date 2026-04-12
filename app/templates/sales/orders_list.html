@@ -11,7 +11,7 @@
         <a href="{{ url_for('sales.orders_list') }}" class="btn btn-outline-secondary btn-sm">Đơn đang hoạt động</a>
         <a href="{{ url_for('sales.orders_list', status='pending') }}" class="btn btn-outline-warning btn-sm">Chưa thanh toán</a>
         <a href="{{ url_for('sales.orders_list', status='paid') }}" class="btn btn-outline-success btn-sm">Đã thanh toán</a>
-        <a href="{{ url_for('sales.orders_list', status='cleared') }}" class="btn btn-outline-dark btn-sm">Đã dọn bàn</a>
+        <a href="{{ url_for('sales.orders_list', status='cleared') }}" class="btn btn-outline-dark btn-sm">Đã hoàn tất</a>
     </div>
 
     <table class="table table-bordered table-hover">
@@ -77,10 +77,20 @@
                         </a>
                     {% endif %}
 
-                    {% if order.status == "paid" and order.order_type == "dine_in" %}
-                        <form method="POST" action="{{ url_for('sales.clear_table', order_id=order.order_id) }}" style="display:inline;">
-                            <button type="submit" class="btn btn-warning btn-sm">Dọn bàn</button>
-                        </form>
+                    {% if order.status == "paid" %}
+                        {% if order.order_type == "dine_in" %}
+                            <form method="POST"
+                                  action="{{ url_for('sales.clear_table', order_id=order.order_id) }}"
+                                  style="display:inline;">
+                                <button type="submit" class="btn btn-warning btn-sm">Dọn bàn</button>
+                            </form>
+                        {% elif order.order_type in ["takeaway", "delivery"] %}
+                            <form method="POST"
+                                  action="{{ url_for('sales.complete_order', order_id=order.order_id) }}"
+                                  style="display:inline;">
+                                <button type="submit" class="btn btn-secondary btn-sm">Hoàn tất</button>
+                            </form>
+                        {% endif %}
                     {% endif %}
                 </td>
             </tr>

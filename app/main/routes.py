@@ -10,6 +10,7 @@ from app.models.store import Store
 from app.models.employee import Employee
 from app.models.product import Product
 from app.models.order import Order
+from app.models.order_item import OrderItem
 
 
 def get_current_store_id():
@@ -37,22 +38,49 @@ def dashboard():
     total_products = Product.query.count()
 
     orders_today_query = Order.query.filter(func.date(Order.order_time) == today)
+
     revenue_today_query = db.session.query(
         func.coalesce(func.sum(Order.total_amount), 0)
     ).filter(
-        Order.status == "paid",
+        Order.status.in_(["paid", "cleared"]),
         func.date(Order.order_time) == today
     )
+
     pending_orders_query = Order.query.filter(Order.status == "pending")
+
+    top_products_query = (
+        db.session.query(
+            Product.product_name,
+            func.coalesce(func.sum(OrderItem.quantity), 0).label("total_qty")
+        )
+        .join(OrderItem, OrderItem.product_id == Product.product_id)
+        .join(Order, Order.order_id == OrderItem.order_id)
+        .filter(
+            func.date(Order.order_time) == today,
+            Order.status.in_(["paid", "cleared"])
+        )
+    )
 
     if role_name in ["MANAGER", "STAFF"] and current_store_id:
         orders_today_query = orders_today_query.filter(Order.store_id == current_store_id)
         revenue_today_query = revenue_today_query.filter(Order.store_id == current_store_id)
         pending_orders_query = pending_orders_query.filter(Order.store_id == current_store_id)
+        top_products_query = top_products_query.filter(Order.store_id == current_store_id)
 
     orders_today = orders_today_query.count()
     revenue_today = revenue_today_query.scalar()
     pending_orders = pending_orders_query.count()
+
+    top_products_today = (
+        top_products_query
+        .group_by(Product.product_id, Product.product_name)
+        .order_by(func.sum(OrderItem.quantity).desc(), Product.product_name.asc())
+        .limit(5)
+        .all()
+    )
+
+    top_product_labels = [item.product_name for item in top_products_today]
+    top_product_quantities = [int(item.total_qty or 0) for item in top_products_today]
 
     return render_template(
         "main/dashboard.html",
@@ -62,5 +90,7 @@ def dashboard():
         orders_today=orders_today,
         revenue_today=revenue_today,
         pending_orders=pending_orders,
-        role_name=role_name
+        role_name=role_name,
+        top_product_labels=top_product_labels,
+        top_product_quantities=top_product_quantities
     )

@@ -365,3 +365,28 @@ def clear_table(order_id):
 
     flash("Dọn bàn thành công.", "success")
     return redirect(url_for("sales.orders_list"))
+
+@sales_bp.route("/orders/<int:order_id>/complete", methods=["POST"])
+@login_required
+@role_required("ADMIN", "MANAGER", "STAFF")
+def complete_order(order_id):
+    order = Order.query.get_or_404(order_id)
+
+    if not can_access_order(order):
+        flash("Bạn không có quyền thao tác đơn hàng này.", "danger")
+        return redirect(url_for("sales.orders_list"))
+
+    if order.order_type not in ["takeaway", "delivery"]:
+        flash("Chỉ đơn mang về hoặc ship mới có thao tác hoàn tất.", "danger")
+        return redirect(url_for("sales.orders_list"))
+
+    if order.status != "paid":
+        flash("Chỉ được hoàn tất sau khi đơn đã thanh toán.", "danger")
+        return redirect(url_for("sales.orders_list"))
+
+    order.status = "cleared"
+    order.cleared_at = datetime.utcnow()
+    db.session.commit()
+
+    flash("Hoàn tất đơn hàng thành công.", "success")
+    return redirect(url_for("sales.orders_list"))
