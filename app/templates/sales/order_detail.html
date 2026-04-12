@@ -62,8 +62,6 @@
                                 {% endif %}
                             </div>
 
-                            <div class="product-stock">Còn: {{ product.quantity_in_stock or 0 }}</div>
-
                             <div class="product-footer">
                                 <div class="product-price">{{ "{:,.0f}".format(product.price or 0) }}đ</div>
                                 <button
@@ -71,8 +69,6 @@
                                     class="product-add-btn"
                                     data-product-id="{{ product.product_id }}"
                                     data-product-name="{{ product.product_name }}"
-                                    data-stock="{{ product.quantity_in_stock or 0 }}"
-                                    {% if (product.quantity_in_stock or 0) <= 0 %}disabled{% endif %}
                                 >
                                     Thêm
                                 </button>
@@ -193,5 +189,33 @@
     </div>
 </div>
 
+<div id="quantity-modal" class="quantity-modal hidden">
+    <div class="quantity-modal-backdrop"></div>
+
+    <div class="quantity-modal-content">
+        <div class="quantity-modal-header">
+            <h4>Nhập số lượng</h4>
+            <button type="button" id="close-quantity-modal" class="quantity-close-btn">&times;</button>
+        </div>
+
+        <div class="quantity-modal-body">
+            <p id="quantity-product-name" class="quantity-product-name"></p>
+
+            <label for="modal-quantity-input" class="form-label">Số lượng</label>
+            <input
+                type="number"
+                id="modal-quantity-input"
+                class="form-control"
+                min="1"
+                value="1"
+            >
+        </div>
+
+        <div class="quantity-modal-footer">
+            <button type="button" id="cancel-quantity-btn" class="btn btn-secondary">Hủy</button>
+            <button type="button" id="confirm-quantity-btn" class="btn btn-primary">Thêm vào đơn</button>
+        </div>
+    </div>
+</div>
 <script src="{{ url_for('static', filename='js/order-pos.js') }}"></script>
 {% endblock %}

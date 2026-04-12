@@ -22,10 +22,8 @@ def generate_order_code():
 def recalculate_order_total(order):
     subtotal = sum(item.line_total for item in order.order_items) if order.order_items else Decimal("0")
     shipping_fee = Decimal("0")
-
     if getattr(order, "order_type", "dine_in") == "delivery":
         shipping_fee = subtotal * Decimal("0.05")
-
     order.subtotal = subtotal
     order.shipping_fee = shipping_fee
     order.total_amount = subtotal + shipping_fee
@@ -34,32 +32,25 @@ def recalculate_order_total(order):
 def can_access_order(order):
     if not current_user.role:
         return False
-
     role_name = current_user.role.role_name
-
     if role_name == "ADMIN":
         return True
-
     if role_name in ["MANAGER", "STAFF"]:
         if not current_user.employee:
             return False
         return order.store_id == current_user.employee.store_id
-
     return False
 
 
 def load_table_choices(form):
     form.table_id.choices = [(0, "-- Chọn bàn --")]
-
     if not current_user.employee:
         return
-
     tables = (
         CafeTable.query.filter_by(store_id=current_user.employee.store_id)
         .order_by(CafeTable.table_code.asc())
         .all()
     )
-
     for table in tables:
         status_text = "Trống" if table.status == "empty" else "Đang sử dụng"
         form.table_id.choices.append(
@@ -70,10 +61,7 @@ def load_table_choices(form):
 def load_product_choices(form):
     products = Product.query.filter_by(status="available").order_by(Product.product_name.asc()).all()
     form.product_id.choices = [
-        (
-            product.product_id,
-            f"{product.product_name} - {int(product.price):,} đ - Còn: {getattr(product, 'quantity_in_stock', 0)}"
-        )
+        (product.product_id, f"{product.product_name} - {int(product.price):,} đ")
         for product in products
     ]
 
@@ -131,13 +119,10 @@ def create_order():
             if not form.table_id.data or form.table_id.data == 0:
                 flash("Vui lòng chọn bàn cho khách ngồi tại quán.", "danger")
                 return render_template("sales/order_create.html", form=form, tables=tables)
-
             table = CafeTable.query.get_or_404(form.table_id.data)
-
             if table.store_id != employee.store_id:
                 flash("Bạn không thể tạo đơn cho bàn ở cửa hàng khác.", "danger")
                 return redirect(url_for("sales.create_order"))
-
             if table.status != "empty":
                 flash("Bàn này không còn ở trạng thái trống.", "danger")
                 return redirect(url_for("sales.create_order"))
@@ -159,17 +144,11 @@ def create_order():
                 return render_template("sales/order_create.html", form=form, tables=tables)
 
         product = Product.query.get_or_404(form.product_id.data)
-
         if product.status != "available":
             flash("Sản phẩm này hiện không còn bán.", "danger")
             return render_template("sales/order_create.html", form=form, tables=tables)
 
         quantity = form.quantity.data
-        quantity_in_stock = getattr(product, "quantity_in_stock", 0)
-
-        if quantity_in_stock < quantity:
-            flash("Số lượng tồn không đủ.", "danger")
-            return render_template("sales/order_create.html", form=form, tables=tables)
 
         order = Order(
             order_code=generate_order_code(),
@@ -184,9 +163,8 @@ def create_order():
             subtotal=Decimal("0"),
             shipping_fee=Decimal("0"),
             total_amount=Decimal("0"),
-            note=note
+            note=note,
         )
-
         db.session.add(order)
         db.session.flush()
 
@@ -199,12 +177,9 @@ def create_order():
             quantity=quantity,
             unit_price=unit_price,
             line_total=line_total,
-            note=item_note
+            note=item_note,
         )
-
         db.session.add(item)
-
-        product.quantity_in_stock = quantity_in_stock - quantity
 
         if order.order_type == "dine_in" and order.table:
             order.table.status = "occupied"
@@ -217,6 +192,7 @@ def create_order():
         return redirect(url_for("sales.order_detail", order_id=order.order_id))
 
     return render_template("sales/order_create.html", form=form, tables=tables)
+
 
 @sales_bp.route("/orders/<int:order_id>")
 @login_required
@@ -235,12 +211,10 @@ def order_detail(order_id):
 
     category_names = []
     seen = set()
-
     for product in products:
         category_name = ""
         if hasattr(product, "category") and product.category:
             category_name = product.category.category_name or ""
-
         if category_name and category_name not in seen:
             seen.add(category_name)
             category_names.append(category_name)
@@ -252,6 +226,7 @@ def order_detail(order_id):
         products=products,
         category_names=category_names,
     )
+
 
 @sales_bp.route("/orders/<int:order_id>/add-item", methods=["POST"])
 @login_required
@@ -278,12 +253,6 @@ def add_order_item(order_id):
             return redirect(url_for("sales.order_detail", order_id=order.order_id))
 
         quantity = form.quantity.data
-        quantity_in_stock = getattr(product, "quantity_in_stock", 0)
-
-        if quantity_in_stock < quantity:
-            flash("Số lượng tồn không đủ.", "danger")
-            return redirect(url_for("sales.order_detail", order_id=order.order_id))
-
         unit_price = Decimal(product.price)
         line_total = unit_price * quantity
 
@@ -293,12 +262,9 @@ def add_order_item(order_id):
             quantity=quantity,
             unit_price=unit_price,
             line_total=line_total,
-            note=form.note.data.strip() if form.note.data else None
+            note=form.note.data.strip() if form.note.data else None,
         )
-
         db.session.add(item)
-
-        product.quantity_in_stock = quantity_in_stock - quantity
 
         if order.order_type == "dine_in" and order.table:
             order.table.status = "occupied"
@@ -312,6 +278,7 @@ def add_order_item(order_id):
         flash("Dữ liệu món không hợp lệ.", "danger")
 
     return redirect(url_for("sales.order_detail", order_id=order.order_id))
+
 
 @sales_bp.route("/orders/<int:order_id>/items/<int:item_id>/delete", methods=["POST"])
 @login_required
@@ -332,12 +299,8 @@ def delete_order_item(order_id, item_id):
         flash("Không thể xóa món của đơn đã thanh toán.", "danger")
         return redirect(url_for("sales.order_detail", order_id=order.order_id))
 
-    if item.product and hasattr(item.product, "quantity_in_stock"):
-        item.product.quantity_in_stock = (item.product.quantity_in_stock or 0) + item.quantity
-
     db.session.delete(item)
     db.session.flush()
-
     recalculate_order_total(order)
     db.session.commit()
 
@@ -364,16 +327,11 @@ def payment(order_id):
         return redirect(url_for("sales.order_detail", order_id=order.order_id))
 
     form = PaymentForm()
-
     if form.validate_on_submit():
         recalculate_order_total(order)
         order.status = "paid"
         order.payment_method = form.payment_method.data
-
-        # không trả bàn ở bước thanh toán nữa
-
         db.session.commit()
-
         flash("Thanh toán thành công.", "success")
         return redirect(url_for("sales.orders_list"))
 
@@ -403,7 +361,6 @@ def clear_table(order_id):
 
     order.status = "cleared"
     order.cleared_at = datetime.utcnow()
-
     db.session.commit()
 
     flash("Dọn bàn thành công.", "success")
