@@ -3,52 +3,66 @@
 {% block title %}Quản lý danh mục{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/category-management.css') }}">
+
+<div class="category-page-header">
     <h2>Quản lý danh mục</h2>
     <a href="{{ url_for('catalog.create_category') }}" class="btn btn-primary">Thêm danh mục</a>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        {% if categories %}
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Tên danh mục</th>
-                        <th>Mô tả</th>
-                        <th>Trạng thái</th>
-                        <th width="180">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for category in categories %}
-                    <tr>
-                        <td>{{ category.category_id }}</td>
-                        <td>{{ category.category_name }}</td>
-                        <td>{{ category.description or '' }}</td>
-                        <td>
-                            {% if category.status == "active" %}
-                                <span class="badge bg-success">Hoạt động</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Ngưng hoạt động</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{{ url_for('catalog.edit_category', category_id=category.category_id) }}" class="btn btn-warning btn-sm">Sửa</a>
-                            <form method="POST" action="{{ url_for('catalog.delete_category', category_id=category.category_id) }}" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa danh mục này?');">
+<div class="category-wrapper">
+    <div class="table-responsive">
+        <table class="table category-table align-middle">
+            <thead>
+                <tr>
+                    <th style="width: 90px;">ID</th>
+                    <th style="width: 280px;">Tên danh mục</th>
+                    <th>Mô tả</th>
+                    <th style="width: 170px;">Trạng thái</th>
+                    <th style="width: 170px;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr>
+                    <td>{{ category.category_id }}</td>
+
+                    <td>
+                        <div class="category-name">{{ category.category_name }}</div>
+                    </td>
+
+                    <td>
+                        <p class="category-desc mb-0">
+                            {{ category.description if category.description else 'Không có mô tả' }}
+                        </p>
+                    </td>
+
+                    <td>
+                        {% if category.status == 'active' %}
+                            <span class="status-badge status-active">Hoạt động</span>
+                        {% else %}
+                            <span class="status-badge status-inactive">Ngưng hoạt động</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="category-actions">
+                            <a href="{{ url_for('catalog.edit_category', category_id=category.category_id) }}"
+                               class="btn btn-warning btn-sm">
+                                Sửa
+                            </a>
+
+                            <form method="POST"
+                                  action="{{ url_for('catalog.delete_category', category_id=category.category_id) }}"
+                                  onsubmit="return confirm('Bạn có chắc muốn xóa danh mục này?');">
                                 <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
                             </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p class="mb-0">Chưa có danh mục nào.</p>
-        {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

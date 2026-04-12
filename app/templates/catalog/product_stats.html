@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Chi tiết sản phẩm{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/product-management.css') }}">
+
+<div class="stats-page">
+    <div class="mb-4">
+        <a href="{{ url_for('catalog.products_list') }}" class="btn btn-secondary btn-sm">← Quay lại</a>
+    </div>
+
+    <div class="stats-card">
+        <div class="stats-header">
+            <div>
+                <h2 class="mb-2">{{ product.product_name }}</h2>
+                <p class="text-muted mb-0">
+                    Mã món: {{ product.product_code }} |
+                    Danh mục: {{ product.category.category_name }}
+                </p>
+            </div>
+        </div>
+
+        <div class="stats-grid mt-4">
+            <div class="stats-item">
+                <div class="stats-label">Giá bán</div>
+                <div class="stats-value">{{ "{:,.0f}".format(product.price) }}đ</div>
+            </div>
+
+            <div class="stats-item">
+                <div class="stats-label">Còn lại</div>
+                <div class="stats-value">{{ product.quantity_in_stock }}</div>
+            </div>
+
+            <div class="stats-item">
+                <div class="stats-label">Số lượng đã bán</div>
+                <div class="stats-value">{{ sold_qty }}</div>
+            </div>
+
+            <div class="stats-item">
+                <div class="stats-label">Doanh thu</div>
+                <div class="stats-value">{{ "{:,.0f}".format(revenue) }}đ</div>
+            </div>
+        </div>
+
+        {% if product.image_url %}
+            <div class="stats-image-wrap mt-4">
+                <img src="{{ product.image_url }}" alt="{{ product.product_name }}" class="stats-image">
+            </div>
+        {% endif %}
+
+        <div class="mt-4 d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('catalog.edit_product', product_id=product.product_id) }}" class="btn btn-warning">
+                Sửa sản phẩm
+            </a>
+
+            <form method="POST"
+                  action="{{ url_for('catalog.delete_product', product_id=product.product_id) }}"
+                  onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?');">
+                <button type="submit" class="btn btn-danger">Xóa sản phẩm</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

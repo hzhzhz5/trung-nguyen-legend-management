@@ -3,56 +3,71 @@
 {% block title %}Quản lý bàn{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Quản lý bàn</h2>
-    <a href="{{ url_for('catalog.create_table') }}" class="btn btn-primary">Thêm bàn</a>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/table-management.css') }}">
+
+<div class="table-toolbar mb-4">
+    <div>
+        <h2 class="mb-0">Quản lý bàn</h2>
+    </div>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        {% if tables %}
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Cửa hàng</th>
-                        <th>Mã bàn</th>
-                        <th>Sức chứa</th>
-                        <th>Trạng thái</th>
-                        <th width="180">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for table in tables %}
-                    <tr>
-                        <td>{{ table.table_id }}</td>
-                        <td>{{ table.store.store_name }}</td>
-                        <td>{{ table.table_code }}</td>
-                        <td>{{ table.capacity }}</td>
-                        <td>
-                            {% if table.status == "empty" %}
-                                <span class="badge bg-success">Trống</span>
-                            {% elif table.status == "occupied" %}
-                                <span class="badge bg-warning text-dark">Đang phục vụ</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Khóa</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{{ url_for('catalog.edit_table', table_id=table.table_id) }}" class="btn btn-warning btn-sm">Sửa</a>
-                            <form method="POST" action="{{ url_for('catalog.delete_table', table_id=table.table_id) }}" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bàn này?');">
-                                <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p class="mb-0">Chưa có bàn nào.</p>
-        {% endif %}
+<div class="table-summary mb-4">
+    <a href="{{ url_for('catalog.tables_list') }}"
+       class="summary-pill {% if not current_filter %}active{% endif %}">
+        Tổng bàn: {{ total_count }}
+    </a>
+
+    <a href="{{ url_for('catalog.tables_list', status='empty') }}"
+       class="summary-pill {% if current_filter == 'empty' %}active{% endif %}">
+        Bàn trống: {{ empty_count }}
+    </a>
+
+    <a href="{{ url_for('catalog.tables_list', status='occupied') }}"
+       class="summary-pill {% if current_filter == 'occupied' %}active{% endif %}">
+        Đang có khách: {{ occupied_count }}
+    </a>
+
+    <a href="{{ url_for('catalog.tables_list', status='unavailable') }}"
+       class="summary-pill {% if current_filter == 'unavailable' %}active{% endif %}">
+        Bàn khóa: {{ unavailable_count }}
+    </a>
+</div>
+
+<div class="table-grid">
+    <div class="management-card create-card">
+        <h4 class="mb-2">Thêm bàn mới</h4>
+        <p class="text-muted mb-3">Tạo nhanh một bàn mới để đưa vào sử dụng.</p>
+        <a href="{{ url_for('catalog.create_table') }}" class="btn btn-dark">+ Thêm bàn</a>
     </div>
+
+    {% for table in tables %}
+        <div class="management-card {{ table.status }}">
+            <div class="table-store">{{ table.store.store_code }} - {{ table.store.store_name }}</div>
+            <div class="table-name">{{ table.table_code }}</div>
+            <div class="table-meta">Sức chứa: {{ table.capacity }} người</div>
+            <div class="table-status">
+                {% if table.status == 'empty' %}
+                    Trống
+                {% elif table.status == 'occupied' %}
+                    Đang sử dụng
+                {% else %}
+                    Đã khóa
+                {% endif %}
+            </div>
+
+            <div class="table-actions pt-3">
+                <a href="{{ url_for('catalog.edit_table', table_id=table.table_id) }}" class="btn btn-warning btn-sm">Sửa</a>
+                <form method="POST" action="{{ url_for('catalog.delete_table', table_id=table.table_id) }}" onsubmit="return confirm('Bạn có chắc muốn xóa bàn này?');">
+                    <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="table-legend mt-4">
+    <span><span class="legend-box legend-empty"></span> Bàn trống</span>
+    <span><span class="legend-box legend-occupied"></span> Đang có khách</span>
+    <span><span class="legend-box legend-unavailable"></span> Bàn khóa</span>
 </div>
 {% endblock %}

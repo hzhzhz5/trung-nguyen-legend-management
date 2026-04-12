@@ -3,56 +3,92 @@
 {% block title %}Quản lý sản phẩm{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Quản lý sản phẩm</h2>
-    <a href="{{ url_for('catalog.create_product') }}" class="btn btn-primary">Thêm sản phẩm</a>
-</div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/product-management.css') }}">
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        {% if products %}
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Mã SP</th>
-                        <th>Tên sản phẩm</th>
-                        <th>Danh mục</th>
-                        <th>Giá bán</th>
-                        <th>Trạng thái</th>
-                        <th width="180">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product in products %}
-                    <tr>
-                        <td>{{ product.product_id }}</td>
-                        <td>{{ product.product_code }}</td>
-                        <td>{{ product.product_name }}</td>
-                        <td>{{ product.category.category_name }}</td>
-                        <td>{{ "{:,.0f}".format(product.price) }} đ</td>
-                        <td>
-                            {% if product.status == "available" %}
-                                <span class="badge bg-success">Đang bán</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Ngưng bán</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{{ url_for('catalog.edit_product', product_id=product.product_id) }}" class="btn btn-warning btn-sm">Sửa</a>
-                            <form method="POST" action="{{ url_for('catalog.delete_product', product_id=product.product_id) }}" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?');">
-                                <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p class="mb-0">Chưa có sản phẩm nào.</p>
-        {% endif %}
+<div class="product-page-header mb-4">
+    <div>
+        <h2 class="mb-0">Quản lý sản phẩm</h2>
     </div>
 </div>
+
+<form method="GET" action="{{ url_for('catalog.products_list') }}" class="product-filter-bar mb-4">
+    <input
+        type="text"
+        name="q"
+        class="form-control"
+        placeholder="Tìm món, mã món..."
+        value="{{ search }}"
+    >
+
+    <select name="category_id" class="form-select">
+        <option value="">Tất cả danh mục</option>
+        {% for category in categories %}
+            <option value="{{ category.category_id }}"
+                {% if current_category == category.category_id|string %}selected{% endif %}>
+                {{ category.category_name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <select name="sort_by" class="form-select">
+        <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Sắp xếp theo tên</option>
+        <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Giá bán tăng dần</option>
+        <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Giá bán giảm dần</option>
+        <option value="sold_desc" {% if sort_by == 'sold_desc' %}selected{% endif %}>Số lượng đã bán</option>
+        <option value="revenue_desc" {% if sort_by == 'revenue_desc' %}selected{% endif %}>Doanh thu</option>
+    </select>
+
+    <button type="submit" class="btn btn-dark">Lọc</button>
+</form>
+
+<div class="product-grid">
+    <div class="product-card add-card">
+        <div>
+            <h4 class="mb-2">Thêm sản phẩm mới</h4>
+            <p class="text-muted mb-3">Tạo nhanh một sản phẩm mới để đưa vào menu.</p>
+        </div>
+        <a href="{{ url_for('catalog.create_product') }}" class="btn btn-dark">+ Thêm sản phẩm</a>
+    </div>
+
+{% for item in products %}
+    {% set product = item.product %}
+    <div class="product-card"
+         data-url="{{ url_for('catalog.product_stats', product_id=product.product_id) }}"
+         onclick="window.location.href=this.dataset.url">
+        <div class="product-image-wrap">
+            {% if product.image_url %}
+                <img src="{{ product.image_url }}" alt="{{ product.product_name }}" class="product-image">
+            {% else %}
+                <div class="product-image placeholder-image">Không có ảnh</div>
+            {% endif %}
+        </div>
+
+        <div class="product-body">
+            <div class="product-name">{{ product.product_name }}</div>
+            <div class="product-category">{{ product.category.category_name }}</div>
+
+            <div class="product-meta mt-3">Còn: {{ product.quantity_in_stock }}</div>
+            <div class="product-meta">Đã bán: {{ item.sold_qty }}</div>
+            <div class="product-meta">Doanh thu: {{ "{:,.0f}".format(item.revenue) }}đ</div>
+
+            <div class="product-footer">
+                <div class="product-price">{{ "{:,.0f}".format(product.price) }}đ</div>
+
+                <div class="product-actions" onclick="event.stopPropagation();">
+                    <a href="{{ url_for('catalog.edit_product', product_id=product.product_id) }}"
+                       class="btn btn-warning btn-sm">
+                        Sửa
+                    </a>
+
+                    <form method="POST"
+                          action="{{ url_for('catalog.delete_product', product_id=product.product_id) }}"
+                          onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+</div>`
 {% endblock %}

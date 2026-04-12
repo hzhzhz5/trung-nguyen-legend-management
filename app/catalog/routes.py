@@ -1,4 +1,5 @@
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, request
+from sqlalchemy import func, desc
 from flask_login import login_required
 
 from app.catalog import catalog_bp
@@ -9,6 +10,7 @@ from app.models.store import Store
 from app.models.cafe_table import CafeTable
 from app.models.category import Category
 from app.models.product import Product
+from app.models import Product, Category, CafeTable, Order, OrderItem, Employee, Role
 
 
 def load_store_choices(form):
@@ -35,8 +37,30 @@ def load_category_choices(form):
 @login_required
 @role_required("ADMIN", "MANAGER")
 def tables_list():
-    tables = CafeTable.query.order_by(CafeTable.table_id.desc()).all()
-    return render_template("catalog/tables_list.html", tables=tables)
+    status_filter = request.args.get("status", "").strip()
+
+    all_tables = CafeTable.query.order_by(CafeTable.table_code.asc()).all()
+
+    empty_count = sum(1 for table in all_tables if table.status == "empty")
+    occupied_count = sum(1 for table in all_tables if table.status == "occupied")
+    unavailable_count = sum(1 for table in all_tables if table.status == "unavailable")
+    total_count = len(all_tables)
+
+    if status_filter in ["empty", "occupied", "unavailable"]:
+        tables = [table for table in all_tables if table.status == status_filter]
+    else:
+        tables = all_tables
+        status_filter = ""
+
+    return render_template(
+        "catalog/tables_list.html",
+        tables=tables,
+        total_count=total_count,
+        empty_count=empty_count,
+        occupied_count=occupied_count,
+        unavailable_count=unavailable_count,
+        current_filter=status_filter,
+    )
 
 
 @catalog_bp.route("/tables/create", methods=["GET", "POST"])
@@ -109,6 +133,10 @@ def edit_table(table_id):
 @role_required("ADMIN", "MANAGER")
 def delete_table(table_id):
     table = CafeTable.query.get_or_404(table_id)
+
+    if table.status == "occupied":
+        flash("Không thể xóa bàn đang có khách.", "danger")
+        return redirect(url_for("catalog.tables_list"))
 
     db.session.delete(table)
     db.session.commit()
@@ -213,8 +241,102 @@ def delete_category(category_id):
 @login_required
 @role_required("ADMIN", "MANAGER")
 def products_list():
-    products = Product.query.order_by(Product.product_id.desc()).all()
-    return render_template("catalog/products_list.html", products=products)
+    search = request.args.get("q", "").strip()
+    category_id = request.args.get("category_id", "").strip()
+    sort_by = request.args.get("sort_by", "name").strip()
+
+    sales_subquery = (
+        db.session.query(
+            OrderItem.product_id.label("product_id"),
+            func.coalesce(func.sum(OrderItem.quantity), 0).label("sold_qty"),
+            func.coalesce(func.sum(OrderItem.quantity * OrderItem.unit_price), 0).label("revenue"),
+        )
+        .join(Order, Order.order_id == OrderItem.order_id)
+        .filter(Order.status == "paid")
+        .group_by(OrderItem.product_id)
+        .subquery()
+    )
+
+    query = (
+        db.session.query(
+            Product,
+            func.coalesce(sales_subquery.c.sold_qty, 0).label("sold_qty"),
+            func.coalesce(sales_subquery.c.revenue, 0).label("revenue"),
+        )
+        .outerjoin(sales_subquery, Product.product_id == sales_subquery.c.product_id)
+        .join(Category, Product.category_id == Category.category_id)
+    )
+
+    if search:
+        query = query.filter(
+            (Product.product_name.ilike(f"%{search}%")) |
+            (Product.product_code.ilike(f"%{search}%"))
+        )
+
+    if category_id and category_id.isdigit():
+        query = query.filter(Product.category_id == int(category_id))
+
+    if sort_by == "name":
+        query = query.order_by(Product.product_name.asc())
+    elif sort_by == "price_asc":
+        query = query.order_by(Product.price.asc())
+    elif sort_by == "price_desc":
+        query = query.order_by(Product.price.desc())
+    elif sort_by == "sold_desc":
+        query = query.order_by(desc("sold_qty"), Product.product_name.asc())
+    elif sort_by == "revenue_desc":
+        query = query.order_by(desc("revenue"), Product.product_name.asc())
+    else:
+        query = query.order_by(Product.product_name.asc())
+
+    products_raw = query.all()
+    categories = Category.query.order_by(Category.category_name.asc()).all()
+
+    products = []
+    for product, sold_qty, revenue in products_raw:
+        products.append({
+            "product": product,
+            "sold_qty": int(sold_qty or 0),
+            "revenue": float(revenue or 0),
+        })
+
+    return render_template(
+        "catalog/products_list.html",
+        products=products,
+        categories=categories,
+        search=search,
+        current_category=category_id,
+        sort_by=sort_by,
+    )
+
+@catalog_bp.route("/products/<int:product_id>/stats")
+@login_required
+@role_required("ADMIN", "MANAGER")
+def product_stats(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    stats = (
+        db.session.query(
+            func.coalesce(func.sum(OrderItem.quantity), 0).label("sold_qty"),
+            func.coalesce(func.sum(OrderItem.quantity * OrderItem.unit_price), 0).label("revenue"),
+        )
+        .join(Order, Order.order_id == OrderItem.order_id)
+        .filter(
+            OrderItem.product_id == product_id,
+            Order.status == "paid"
+        )
+        .first()
+    )
+
+    sold_qty = int(stats.sold_qty or 0)
+    revenue = float(stats.revenue or 0)
+
+    return render_template(
+        "catalog/product_stats.html",
+        product=product,
+        sold_qty=sold_qty,
+        revenue=revenue,
+    )
 
 
 @catalog_bp.route("/products/create", methods=["GET", "POST"])
@@ -292,8 +414,12 @@ def edit_product(product_id):
 def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
 
+    used_in_orders = OrderItem.query.filter_by(product_id=product_id).first()
+    if used_in_orders:
+        flash("Không thể xóa sản phẩm này vì đã phát sinh trong đơn hàng.", "danger")
+        return redirect(url_for("catalog.products_list"))
+
     db.session.delete(product)
     db.session.commit()
-
     flash("Xóa sản phẩm thành công.", "success")
     return redirect(url_for("catalog.products_list"))

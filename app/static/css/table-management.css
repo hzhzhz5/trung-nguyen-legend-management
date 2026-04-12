@@ -1,0 +1,136 @@
+.table-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.table-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.table-summary .summary-pill {
+    background: #fff;
+    border: 1px solid #e6e6e6;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #111827;
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+.table-summary .summary-pill:hover {
+    border-color: #bfc6ce;
+    color: #111827;
+}
+
+.table-summary .summary-pill.active {
+    background: #111827;
+    color: #ffffff;
+    border-color: #111827;
+}
+
+.table-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 18px;
+}
+
+.management-card {
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid transparent;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+}
+
+.management-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.management-card.empty {
+    background: #dff5e8;
+}
+
+.management-card.occupied {
+    background: #f7e8a3;
+}
+
+.management-card.unavailable {
+    background: #e9ecef;
+}
+
+.management-card.create-card {
+    background: #f8f9fa;
+    border: 2px dashed #cfd4da;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.table-store {
+    font-size: 13px;
+    color: #4f4f4f;
+    margin-bottom: 10px;
+}
+
+.table-name {
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 14px;
+}
+
+.table-meta,
+.table-status {
+    font-size: 15px;
+    color: #2e2e2e;
+    margin-bottom: 4px;
+}
+
+.table-actions {
+    margin-top: auto;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.table-actions form {
+    margin: 0;
+}
+
+.table-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    font-size: 14px;
+}
+
+.legend-box {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.legend-empty {
+    background: #dff5e8;
+}
+
+.legend-occupied {
+    background: #f7e8a3;
+}
+
+.legend-unavailable {
+    background: #e9ecef;
+}
